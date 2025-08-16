@@ -2,6 +2,7 @@
 
 import CopyButton from './CopyButton';
 import { motion } from 'framer-motion';
+import { Variants } from "framer-motion";
 import { Palette, Type, AlignHorizontalJustifyCenter, MousePointerSquareDashed, Check, AlertTriangle, Lightbulb } from 'lucide-react';
 
 interface ReportViewProps {
@@ -9,17 +10,49 @@ interface ReportViewProps {
   scoreColor: string;
 }
 
+
 const issueIcons: { [key: string]: React.ReactNode } = {
-  'Typography': <Type size={20} className="text-indigo-400" />,
-  'Element Alignment': <AlignHorizontalJustifyCenter size={20} className="text-sky-400" />,
-  'Color Scheme': <Palette size={20} className="text-rose-400" />,
-  'Whitespace Usage': <MousePointerSquareDashed size={20} className="text-teal-400" />,
-  'Image Quality': <AlertTriangle size={20} className="text-amber-400" />,
-  'default': <AlertTriangle size={20} className="text-slate-500" />
+  'Typography': <Type size={20} className="icon-typography" />,
+  'Element Alignment': <AlignHorizontalJustifyCenter size={20} className="icon-alignment" />,
+  'Color Scheme': <Palette size={20} className="icon-color-scheme" />,
+  'Whitespace Usage': <MousePointerSquareDashed size={20} className="icon-whitespace" />,
+  'Image Quality': <AlertTriangle size={20} className="icon-alert" />,
+  'default': <AlertTriangle size={20} className="icon-default" />
 };
 
+
+
 const ReportView = ({ analysis, scoreColor }: ReportViewProps) => {
-  const containerVariants = {
+  // First normalize score to be out of 100
+  const normalizedScore = analysis?.score ? Math.min(Math.max(analysis.score, 0), 100) : 0;
+
+  // Then generate recommendations based on issues
+  const recommendations = analysis?.issues?.map((issue: any) => {
+    return {
+      recommendation: getRecommendation(issue.type, issue.description)
+    };
+  }) || [];
+
+  // Function to generate recommendations from issues
+  function getRecommendation(type: string, description: string): string {
+    switch(type) {
+      case 'Typography':
+        return `Consider using a more legible font with better contrast against the background. ${description}`;
+      case 'Element Alignment':
+        return `Improve alignment of elements using a grid system or flexbox. ${description}`;
+      case 'Color Scheme':
+        return `Adjust color combinations to improve accessibility and visual harmony. ${description}`;
+      case 'Whitespace Usage':
+        return `Increase whitespace between elements to improve readability. ${description}`;
+      case 'Image Quality':
+        return `Use higher resolution images for better visual quality. ${description}`;
+      default:
+        return `Improve this aspect of your design: ${description}`;
+    }
+  }
+
+  // Define proper TypeScript types for the variants
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -29,7 +62,7 @@ const ReportView = ({ analysis, scoreColor }: ReportViewProps) => {
     },
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { y: 20, opacity: 0 },
     visible: {
       y: 0,
@@ -49,17 +82,17 @@ const ReportView = ({ analysis, scoreColor }: ReportViewProps) => {
       variants={containerVariants}
     >
       <motion.div
-        className="bg-slate-800/50 border border-slate-700/50 shadow-2xl shadow-slate-950/50 rounded-2xl p-8"
+        className="report-container glass-effect"
         variants={itemVariants}
       >
-        <h2 className="text-center text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">Overall Design Score</h2>
+        <h2 className="text-center score-heading mb-2">Overall Design Score</h2>
         <div className="text-center mb-8">
-          <div className={`text-7xl font-bold ${scoreColor}`}>{analysis.score}</div>
-          <div className="w-full bg-slate-700 rounded-full h-3 mt-4 overflow-hidden">
+          <div className={`overall-score ${scoreColor}`}>{normalizedScore}/100</div>
+          <div className="score-bar-background mt-4">
             <motion.div
-              className="bg-gradient-to-r from-sky-500 to-indigo-500 h-3 rounded-full"
+              className="score-bar-fill"
               initial={{ width: 0 }}
-              animate={{ width: `${analysis.score}%` }}
+              animate={{ width: `${normalizedScore}%` }}
               transition={{ duration: 1.5, ease: "easeInOut" }}
             />
           </div>
@@ -67,21 +100,21 @@ const ReportView = ({ analysis, scoreColor }: ReportViewProps) => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-10">
           <motion.div className="space-y-4" variants={itemVariants}>
-            <h3 className="text-lg font-bold text-slate-100 flex items-center gap-3">
-              <AlertTriangle className="text-amber-400" />
-              Detected Issues
+            <h3 className="section-heading">
+              <AlertTriangle className="icon-alert" />
+              Detected Issues ({analysis?.issues?.length || 0})
             </h3>
             <div className="space-y-3">
-              {analysis.issues?.map((item: any, index: number) => (
+              {analysis?.issues?.map((item: any, index: number) => (
                 <motion.div
                   key={index}
-                  className="bg-slate-800 p-4 rounded-lg border border-slate-700 flex items-start gap-4 transition-all hover:border-slate-600 hover:bg-slate-800/80"
+                  className="issue-item"
                   variants={itemVariants}
                 >
-                  <div className="flex-shrink-0 mt-1">{issueIcons[item.type] || issueIcons['default']}</div>
+                  <div className="issue-icon mt-1">{issueIcons[item.type] || issueIcons['default']}</div>
                   <div>
-                    <h4 className="font-semibold text-slate-200">{item.type}</h4>
-                    <p className="text-slate-400 text-sm">{item.description}</p>
+                    <h4 className="issue-title">{item.type}</h4>
+                    <p className="issue-description">{item.description}</p>
                   </div>
                 </motion.div>
               ))}
@@ -89,21 +122,21 @@ const ReportView = ({ analysis, scoreColor }: ReportViewProps) => {
           </motion.div>
 
           <motion.div className="space-y-4" variants={itemVariants}>
-            <h3 className="text-lg font-bold text-slate-100 flex items-center gap-3">
-              <Lightbulb className="text-emerald-400" />
-              Actionable Recommendations
+            <h3 className="section-heading">
+              <Lightbulb className="icon-lightbulb" />
+              Actionable Recommendations ({recommendations.length})
             </h3>
             <div className="space-y-3">
-              {analysis.recommendations?.map((rec: any, index: number) => (
+              {recommendations.map((rec: any, index: number) => (
                 <motion.div
                   key={index}
-                  className="bg-slate-800 p-4 rounded-lg border border-slate-700 flex items-start gap-4 transition-all hover:border-slate-600 hover:bg-slate-800/80"
+                  className="recommendation-item"
                   variants={itemVariants}
                 >
-                  <div className="flex-shrink-0 mt-1">
-                    <Check size={20} className="text-emerald-400" />
+                  <div className="recommendation-icon mt-1">
+                    <Check size={20} className="icon-check" />
                   </div>
-                  <p className="flex-grow text-slate-300 text-sm">{rec.recommendation}</p>
+                  <p className="flex-grow recommendation-text">{rec.recommendation}</p>
                   <CopyButton textToCopy={rec.recommendation} />
                 </motion.div>
               ))}

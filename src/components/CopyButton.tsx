@@ -18,8 +18,8 @@ const CopyButton = ({ textToCopy }: CopyButtonProps) => {
   };
 
   return (
-    <button onClick={handleCopy} className="text-slate-500 hover:text-slate-300 transition-colors">
-      {isCopied ? <Check size={16} className="text-emerald-400" /> : <Copy size={16} />}
+    <button onClick={handleCopy} className="copy-button">
+      {isCopied ? <Check size={16} className="icon-check" /> : <Copy size={16} />}
     </button>
   );
 };
