@@ -8,35 +8,15 @@ import { AlertTriangle } from 'lucide-react';
 
 export default function Home() {
   const [image, setImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const onDrop = useCallback((acceptedFiles) => {
-    if (acceptedFiles && acceptedFiles[0]) {
-      const file = acceptedFiles[0];
-      setImage(file);
-      setImagePreview(URL.createObjectURL(file));
-      setAnalysis(null);
-      setError(null);
-    }
-  }, []);
-
-  const handleSelectExample = async (src) => {
-    setImagePreview(src);
+  const handleImageReady = useCallback((file) => {
+    setImage(file);
     setAnalysis(null);
     setError(null);
-    try {
-      const response = await fetch(src);
-      const blob = await response.blob();
-      const file = new File([blob], src.split('/').pop(), { type: blob.type });
-      setImage(file);
-    } catch (err) {
-      console.error('Error loading example image:', err);
-      setError('Failed to load the example image.');
-    }
-  };
+  }, []);
 
   const handleAnalyze = async () => {
     if (!image) return;
@@ -69,7 +49,7 @@ export default function Home() {
   };
 
   const scoreColor = useMemo(() => {
-    if (!analysis?.score) return ''; // No specific color class if no score
+    if (!analysis?.score) return '';
     if (analysis.score >= 80) return 'score-high';
     if (analysis.score >= 50) return 'score-medium';
     return 'score-low';
@@ -81,17 +61,15 @@ export default function Home() {
       <main className="py-12">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <ImageUploader
-            onDrop={onDrop}
-            imagePreview={imagePreview}
+            onImageReady={handleImageReady}
             handleAnalyze={handleAnalyze}
             loading={loading}
             image={image}
           />
           
-          {!analysis && !loading && (
-            // You can add a placeholder or instructions here if needed
+          {!analysis && !loading && !image && (
             <div className="text-center mt-12 text-lg text-gray-600">
-              Upload an image to get started with your design audit!
+              Upload an image or enter a website URL to get started!
             </div>
           )}
 
